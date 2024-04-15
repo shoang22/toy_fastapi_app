@@ -1,3 +1,10 @@
+## Preliminaries
+
+Install dependencies with:
+
+`pip install -r requirements.txt`
+
+
 ## Starting the application
 
 You will first need to start the application. There are two options:
