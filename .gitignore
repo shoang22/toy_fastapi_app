@@ -2,6 +2,7 @@ logs/
 notebooks/
 *.log
 tests/files/*
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
