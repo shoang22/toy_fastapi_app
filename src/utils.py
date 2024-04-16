@@ -15,12 +15,15 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
         super().__init__(separators, keep_separator, is_separator_regex, **kwargs)
 
     
-    def _merge_splits(self, splits: Iterable[str], separator: str) -> Generator[str, None, None]:
+    def _merge_splits_stream(self, splits: Iterable[str], separator: str) -> Generator[str, None, None]:
         # We now want to combine these smaller pieces into medium size
         # chunks to send to the LLM.
+
+        # We want to yield a valid chunk to _split_text, which will return it to the caller immediately
+        # Create a helper function that yields the equivalent to what is returned in _join_docs 
+
         separator_len = self._length_function(separator)
 
-        docs = []
         current_doc: List[str] = []
         total = 0
         for d in splits:
@@ -35,9 +38,12 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
                         f"which is longer than the specified {self._chunk_size}"
                     )
                 if len(current_doc) > 0:
-                    doc = self._join_docs(current_doc, separator)
+                    # Problem here is that _join_docs needs a list of strings 
+                    # Creating chunk here
+                    # I do not want to have to provide a list of strings
+                    doc = self._join_docs_stream(current_doc, separator)
                     if doc is not None:
-                        docs.append(doc)
+                        yield doc
                     # Keep on popping if:
                     # - we have a larger chunk than in the chunk overlap
                     # - or if we still have any chunks and the length is long
@@ -46,6 +52,7 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
                         > self._chunk_size
                         and total > 0
                     ):
+                        # Creating overlap here
                         total -= self._length_function(current_doc[0]) + (
                             separator_len if len(current_doc) > 1 else 0
                         )
@@ -54,11 +61,21 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
             total += _len + (separator_len if len(current_doc) > 1 else 0)
         doc = self._join_docs(current_doc, separator)
         if doc is not None:
-            docs.append(doc)
-        yield from docs
+            yield doc
 
 
-    def _split_text(self, text: str, separators: List[str]) -> Generator[str, None, None]:
+    def _join_docs_stream(self, docs: List[str], separator: str) -> Optional[str]:
+        text = ""
+
+        text = separator.join(docs)
+        if self._strip_whitespace:
+            text = text.strip()
+        if text == "":
+            return None
+        else:
+            return text
+
+    def _split_text_stream(self, text: str, separators: List[str]) -> Generator[str, None, None]:
         """Split incoming text and return chunks."""
         # Get appropriate separator to use
         separator = separators[-1]
@@ -74,7 +91,8 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
                 break
 
         _separator = separator if self._is_separator_regex else re.escape(separator)
-        splits = _split_text_with_regex(text, _separator, self._keep_separator)
+        # Returns chunks of text split by separator
+        splits = _split_text_with_regex_stream(text, _separator, self._keep_separator)
 
         # Now go merging things, recursively splitting longer texts.
         _good_splits = []
@@ -84,20 +102,23 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
                 _good_splits.append(s)
             else:
                 if _good_splits:
-                    merged_text = self._merge_splits(_good_splits, _separator)
+                    merged_text = self._merge_splits_stream(_good_splits, _separator)
                     yield from merged_text
                     _good_splits = []
                 if not new_separators:
                     yield s
                 else:
-                    other_info = self._split_text(s, new_separators)
+                    other_info = self._split_text_stream(s, new_separators)
                     yield from other_info
         if _good_splits:
-            merged_text = self._merge_splits(_good_splits, _separator)
+            merged_text = self._merge_splits_stream(_good_splits, _separator)
             yield from merged_text
 
+    def split_text_stream(self, text: str) -> Generator[str, None, None]:
+        return self._split_text_stream(text, self._separators)
+
     
-def _split_text_with_regex(
+def _split_text_with_regex_stream(
     text: str, separator: str, keep_separator: bool
 ) -> Generator[str, None, None]:
     # Now that we have the separator, split the text
