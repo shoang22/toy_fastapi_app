@@ -6,3 +6,9 @@ run-local-gunicorn:
 
 load-test:
 	locust --config tests/locust.conf
+
+run:
+	docker compose up --detach --build
+
+stop:
+	docker compose down 

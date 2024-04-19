@@ -1,25 +1,25 @@
 from fastapi import APIRouter, BackgroundTasks, UploadFile, File
 
-from src.services import nonblocking_call 
+from src.services import nonblocking_call
 from src.responses import BaseResponse
 from src.dependencies import TaskIDDependency 
 from src.loggers import logger
+from src.broker import broker
 
 router = APIRouter()
 
+
 @router.post("/block", response_model=BaseResponse)
 async def get_blocked(
-    background_task: BackgroundTasks, 
     task_id: TaskIDDependency, 
     file: UploadFile = File(...),
 ):
+    await broker.startup()
     logger.info(f"Task {task_id} initiated")
     text = (await file.read()).decode()
-
-    background_task.add_task(
-        nonblocking_call, 
-        text=text,
-        task_id=task_id, 
+    task = nonblocking_call.kiq(
+        text=text, task_id=task_id
     )
+
 
     return BaseResponse(response_id=task_id)

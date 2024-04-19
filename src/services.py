@@ -1,10 +1,11 @@
-import time
 from fastapi.concurrency import run_in_threadpool
 from langchain.text_splitter import RecursiveCharacterTextSplitter 
 
 from src.loggers import logger
+from src.broker import broker
 
 
+@broker.task
 async def nonblocking_call(text: str, task_id):
     splitter = RecursiveCharacterTextSplitter()
     text_chunks = await run_in_threadpool(splitter.split_text, text=text)
