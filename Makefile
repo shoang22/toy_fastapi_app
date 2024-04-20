@@ -1,3 +1,8 @@
+.PHONY: test
+
+test:
+    PYTHONPATH=. pytest
+
 run-local:
 	uvicorn src.app:app --reload --port 8000
 
