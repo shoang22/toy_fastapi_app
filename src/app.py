@@ -25,3 +25,4 @@ async def lifespan(app: FastAPI):
 def get_app() -> FastAPI:
     app = FastAPI(lifespan=lifespan)
     app.include_router(router)
+    return app
