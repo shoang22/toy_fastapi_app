@@ -1,3 +1,8 @@
+.PHONY: test
+
+test:
+    PYTHONPATH=. pytest
+
 run-local:
 	uvicorn src.app:app --reload --port 8000
 
@@ -11,4 +16,4 @@ run:
 	docker compose up --detach --build
 
 stop:
-	docker compose down 
+	docker compose down
