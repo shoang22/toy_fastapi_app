@@ -1,6 +1,4 @@
-import json
-from fastapi import APIRouter, BackgroundTasks, UploadFile, File, Depends, Query
-from typing import Dict, List
+from fastapi import APIRouter, UploadFile, File, Depends
 
 from src.services import nonblocking_call
 from src.models import (
@@ -36,11 +34,8 @@ async def upload_file_json(
     params: UploadFileParamsRequest = Depends(),
     file: UploadFile = File(...),
 ):
-    print(f"Field is: {params.custom_fields} with type: {type(params.custom_fields)}")
-
     fixed_dict = {"properties": {"yo": "it's cool"}}
     fixed_dict["properties"].update(params.custom_fields)
-    print(fixed_dict)
 
     file = await file.read()
     return UploadFileParamsResponse(
@@ -54,5 +49,4 @@ async def upload_file_json(
 async def upload_file_json(
     params: CreateFileRequest,
 ):
-    print(f"Field is: {params.custom_fields} with type: {type(params.custom_fields)}")
-    return {"haha": "hahahahhaha"}
+    return {"processed_as": type(params.custom_fields)}
