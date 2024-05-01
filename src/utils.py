@@ -1,21 +1,21 @@
 import re
 from typing import Any, List, Optional, Generator, Iterable
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from src.loggers import logger
 
 
 class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
     def __init__(
-        self, 
-        separators: Optional[List[str]] = None, 
-        keep_separator: bool = True, 
-        is_separator_regex: bool = False, 
-        **kwargs: Any
+        self,
+        separators: Optional[List[str]] = None,
+        keep_separator: bool = True,
+        is_separator_regex: bool = False,
+        **kwargs: Any,
     ) -> None:
         super().__init__(separators, keep_separator, is_separator_regex, **kwargs)
 
-    
-    def _merge_splits(self, splits: Iterable[str], separator: str) -> Generator[str, None, None]:
+    def _merge_splits(
+        self, splits: Iterable[str], separator: str
+    ) -> Generator[str, None, None]:
         # We now want to combine these smaller pieces into medium size
         # chunks to send to the LLM.
         separator_len = self._length_function(separator)
@@ -29,11 +29,11 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
                 total + _len + (separator_len if len(current_doc) > 0 else 0)
                 > self._chunk_size
             ):
-                if total > self._chunk_size:
-                    logger.warning(
-                        f"Created a chunk of size {total}, "
-                        f"which is longer than the specified {self._chunk_size}"
-                    )
+                # if total > self._chunk_size:
+                #     logger.warning(
+                #         f"Created a chunk of size {total}, "
+                #         f"which is longer than the specified {self._chunk_size}"
+                #     )
                 if len(current_doc) > 0:
                     doc = self._join_docs(current_doc, separator)
                     if doc is not None:
@@ -57,8 +57,9 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
             docs.append(doc)
         yield from docs
 
-
-    def _split_text(self, text: str, separators: List[str]) -> Generator[str, None, None]:
+    def _split_text(
+        self, text: str, separators: List[str]
+    ) -> Generator[str, None, None]:
         """Split incoming text and return chunks."""
         # Get appropriate separator to use
         separator = separators[-1]
@@ -96,7 +97,7 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
             merged_text = self._merge_splits(_good_splits, _separator)
             yield from merged_text
 
-    
+
 def _split_text_with_regex(
     text: str, separator: str, keep_separator: bool
 ) -> Generator[str, None, None]:
@@ -117,4 +118,3 @@ def _split_text_with_regex(
     for s in splits:
         if s != "":
             yield s
-    

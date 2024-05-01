@@ -1,8 +1,9 @@
 import taskiq_fastapi
 from taskiq_nats import NatsBroker
-from taskiq_redis import RedisAsyncResultBackend  
+from taskiq_redis import RedisAsyncResultBackend
 
 from src.settings import settings
+
 
 broker = NatsBroker(
     settings.nats_urls.split(","),

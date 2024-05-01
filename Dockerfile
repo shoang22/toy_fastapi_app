@@ -20,4 +20,4 @@ RUN poetry install --without lint
 COPY . /app/src/
 RUN poetry install --without lint
 
-CMD ["gunicorn", "src.app:get_app"]
+CMD ["gunicorn", "src.app2:app"]

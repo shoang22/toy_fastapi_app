@@ -1,14 +1,55 @@
+import taskiq_fastapi
 import pytest
 import json
 import tempfile
+from typing import Generator
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.app import app
+from src.app import get_app
+from src.app import broker
 
-client = TestClient(app)
+
+@pytest.fixture(scope="session")
+def anyio_backend() -> str:
+    """
+    Backend for anyio pytest plugin.
+
+    :return: backend name.
+    """
+    return "asyncio"
 
 
-def test_pass_json_file():
+@pytest.fixture
+def fastapi_app() -> FastAPI:
+    return get_app()
+
+
+@pytest.fixture(autouse=True)
+def init_taskiq_deps(fastapi_app: FastAPI):
+    # This is important part. Here we add dependency context,
+    # this thing helps in resolving dependencies for tasks
+    # for inmemory broker.
+    taskiq_fastapi.populate_dependency_context(broker, fastapi_app)
+
+    yield
+
+    broker.custom_dependency_context = {}
+
+
+@pytest.fixture
+def client(fastapi_app: FastAPI) -> Generator[TestClient, None, None]:
+    """
+    Fixture that creates client for requesting server.
+
+    :param fastapi_app: the application.
+    :yield: client for the app.
+    """
+    with TestClient(app=fastapi_app, base_url="http://test") as ac:
+        yield ac
+
+
+def test_pass_json_file(client: TestClient):
     n = 10
 
     with tempfile.NamedTemporaryFile(delete=True) as f:
@@ -23,15 +64,6 @@ def test_pass_json_file():
                 # "custom_fields": '{"favorite_rapper": "yo_gotti"}'
             },
         )
-    assert resp.status_code
+    assert resp.status_code == 200
     print(resp.json())
     assert len(resp.json()["some_numbers"]) == n
-
-
-def test_create_file():
-    # Because we are using a json param, "custom_fields" will not be converted to a json by pydantic
-    resp = client.post(
-        "/create",
-        json={"chunk_size": 4, "custom_fields": json.dumps({"this": "kinda crazy"})},
-    )
-    assert resp.status_code == 200

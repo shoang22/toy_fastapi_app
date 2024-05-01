@@ -31,7 +31,7 @@ services:
     command:
       - taskiq
       - worker
-      - src.broker:broker
+      - src.app2:broker
   nats:
     image: nats:2.9.15-alpine
     hostname: nats
