@@ -11,7 +11,7 @@ redis:
 run-local:
 	uvicorn ${APP_PATH} --reload --port 8000
 
-task-iq:
+taskiq:
 	taskiq worker src.broker:broker --reload
 
 stop-redis:
@@ -25,7 +25,7 @@ nats:
 	docker run -d \
 		--name nats \
 		-p 4222:4222 \
-		-v ./nats-server.conf:/etc/nats \
+		-v ./nats-server.conf:/etc/nats/nats-server.conf \
 		nats:2.9.15-alpine \
 		-m 8222 \
 		-c /etc/nats/nats-server.conf \

@@ -1,7 +1,7 @@
 import json
 from pydantic import BaseModel, Field, field_validator
 from pydantic.config import ConfigDict
-from typing import Optional
+from typing import Optional, Dict, Any
 from fastapi import Query
 
 
@@ -44,3 +44,30 @@ class UploadFileParamsResponse(BaseResponse):
 class MyVal(BaseModel):
     key: str
     value: str
+
+
+class SearchRequest(BaseModel):
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "search": {
+                        "query": {
+                            "bool": {
+                                "must": [
+                                    {"match": {"title": "Search"}},
+                                    {"match": {"content": "Elasticsearch"}},
+                                ],
+                                "filter": [
+                                    {"term": {"status": "published"}},
+                                    {"range": {"publish_date": {"gte": "2015-01-01"}}},
+                                ],
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    }
+
+    search: Dict[Any, Any]

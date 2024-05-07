@@ -67,3 +67,23 @@ def test_pass_json_file(client: TestClient):
     assert resp.status_code == 200
     print(resp.json())
     assert len(resp.json()["some_numbers"]) == n
+
+
+def test_query(client: TestClient):
+    body = {
+        "query": {
+            "bool": {
+                "must": [
+                    {"match": {"title": "Search"}},
+                    {"match": {"content": "Elasticsearch"}},
+                ],
+                "filter": [
+                    {"term": {"status": "published"}},
+                    {"range": {"publish_date": {"gte": "2015-01-01"}}},
+                ],
+            }
+        }
+    }
+    resp = client.post("/query", json={"search": body})
+    print(resp.json()["query"])
+    assert resp.status_code == 200

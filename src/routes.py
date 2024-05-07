@@ -1,5 +1,7 @@
+import json
 import uuid
-from fastapi import APIRouter, UploadFile, File, Depends, Query
+from fastapi import APIRouter, UploadFile, File, Depends, Query, Request
+from fastapi.responses import JSONResponse
 
 from src.services import my_redis_task, nonblocking_call
 from src.models import (
@@ -8,9 +10,9 @@ from src.models import (
     MyVal,
     BaseResponse,
     BlockRequestBody,
+    SearchRequest,
 )
 from src.dependencies import TaskIDDep, RedisDep
-from src.broker import broker
 from src.loggers import logger
 
 router = APIRouter()
@@ -21,7 +23,6 @@ async def get_blocked(
     file: UploadFile = File(...),
 ):
     task_id = str(uuid.uuid4())
-    await broker.startup()
     logger.info(f"Task {task_id} initiated")
     text = (await file.read()).decode()
 
@@ -59,3 +60,8 @@ async def insert_redis(body: MyVal):
 async def get_data(db: RedisDep, task_id: str = Query(...)):
     data = await db.get(task_id)
     return {"data": data}
+
+
+@router.post("/search")
+async def query(body: SearchRequest) -> JSONResponse:
+    return JSONResponse(content=body)
