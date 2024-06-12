@@ -1,6 +1,5 @@
-import json
 import uuid
-from fastapi import APIRouter, UploadFile, File, Depends, Query, Request
+from fastapi import APIRouter, UploadFile, File, Depends, Query
 from fastapi.responses import JSONResponse
 
 from src.services import my_redis_task, nonblocking_call

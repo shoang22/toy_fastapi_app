@@ -57,7 +57,7 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
             docs.append(doc)
         yield from docs
 
-    def _split_text(
+    def _split_text_stream(
         self, text: str, separators: List[str]
     ) -> Generator[str, None, None]:
         """Split incoming text and return chunks."""
@@ -96,6 +96,9 @@ class RecursiveCharacterTextStreamer(RecursiveCharacterTextSplitter):
         if _good_splits:
             merged_text = self._merge_splits(_good_splits, _separator)
             yield from merged_text
+
+    def split_text_stream(self, text):
+        return self._split_text_stream(text, separators=self._separators)
 
 
 def _split_text_with_regex(

@@ -1,6 +1,5 @@
 import taskiq_fastapi
 import pytest
-import json
 import tempfile
 from typing import Generator
 from fastapi import FastAPI
